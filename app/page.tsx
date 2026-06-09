@@ -89,6 +89,7 @@ export default function Home() {
   const [showModelSwitch, setShowModelSwitch] = useState(false);
   const [totalTokens, setTotalTokens] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
+  const [direction, setDirection] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -119,7 +120,10 @@ Write approximately 500-700 words. This is a FULL opening chapter, not a summary
 
 Do NOT write a title or chapter heading — just the story text. Write every scene fully, moment by moment.`;
     } else {
-      userPrompt = `Here is the story so far:\n\n${previousContent}\n\nContinue the story with the next full chapter/section. Write approximately 500-700 words. Requirements:
+      const directionNote = direction.trim()
+        ? `\n\nIMPORTANT DIRECTION FROM THE AUTHOR: ${direction.trim()}\nYou MUST incorporate this direction into the next section naturally.`
+        : "";
+      userPrompt = `Here is the story so far:\n\n${previousContent}${directionNote}\n\nContinue the story with the next full chapter/section. Write approximately 500-700 words. Requirements:
 - Continue EXACTLY from where the story left off
 - Maintain perfect consistency with established characters, settings, and plot
 - Advance the plot meaningfully
@@ -159,6 +163,7 @@ Do NOT add chapter headings. Just continue the narrative seamlessly.`;
           blockNum: prev.length + 1,
         },
       ]);
+      setDirection("");
       if (isFirst) setStep("writing");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -443,19 +448,44 @@ Do NOT add chapter headings. Just continue the narrative seamlessly.`;
             </div>
 
             {!loading && blocks.length > 0 && (
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button onClick={() => generateBlock(false)} style={{
-                  flex: 1, padding: 16, background: model?.color, border: "none", borderRadius: 12,
-                  color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
-                  boxShadow: `0 0 30px ${model?.color}20`, letterSpacing: 0.5,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              <div>
+                <div style={{
+                  background: "#0A0A12", border: "1px solid #14141F", borderRadius: 14,
+                  padding: "16px 18px", marginBottom: 12,
                 }}>
-                  Continue with {model?.name} →
-                </button>
-                <button onClick={copyStory} style={{
-                  padding: "16px 24px", background: "#0E0E16", border: "1px solid #1A1A28",
-                  borderRadius: 12, color: "#6B6775", fontSize: 13, fontWeight: 500, cursor: "pointer",
-                }}>📋 Copy All</button>
+                  <div style={{
+                    fontSize: 10, letterSpacing: 3, textTransform: "uppercase",
+                    color: "#2A2A3A", fontWeight: 500, marginBottom: 10,
+                  }}>
+                    Steer the story <span style={{ textTransform: "none", letterSpacing: 0, opacity: 0.5 }}>(optional)</span>
+                  </div>
+                  <textarea
+                    value={direction}
+                    onChange={(e) => setDirection(e.target.value)}
+                    placeholder="e.g. &quot;Introduce a betrayal&quot; or &quot;Shift to a flashback&quot; or &quot;The villain reveals their true identity&quot;..."
+                    rows={2}
+                    style={{
+                      width: "100%", background: "#06060A", border: "1px solid #1A1A28",
+                      borderRadius: 10, padding: "12px 14px", color: "#E8E4DF",
+                      fontSize: 13, lineHeight: 1.6, fontFamily: "'Libre Franklin', sans-serif",
+                      fontWeight: 300, resize: "none", boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button onClick={() => generateBlock(false)} style={{
+                    flex: 1, padding: 16, background: model?.color, border: "none", borderRadius: 12,
+                    color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
+                    boxShadow: `0 0 30px ${model?.color}20`, letterSpacing: 0.5,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  }}>
+                    {direction.trim() ? `Continue with new direction →` : `Continue with ${model?.name} →`}
+                  </button>
+                  <button onClick={copyStory} style={{
+                    padding: "16px 24px", background: "#0E0E16", border: "1px solid #1A1A28",
+                    borderRadius: 12, color: "#6B6775", fontSize: 13, fontWeight: 500, cursor: "pointer",
+                  }}>📋 Copy All</button>
+                </div>
               </div>
             )}
 
