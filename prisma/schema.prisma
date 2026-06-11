@@ -1,0 +1,43 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DATABASE_URL_UNPOOLED")
+  extensions = [vector]
+}
+
+model Story {
+  id        String   @id @default(cuid())
+  genre     String
+  premise   String?
+  createdAt DateTime @default(now())
+  blocks    Block[]
+  chunks    StoryChunk[]
+}
+
+model Block {
+  id         String   @id @default(cuid())
+  storyId    String
+  text       String
+  modelId    String
+  modelName  String
+  blockNum   Int
+  chunkStart Int      @default(0)
+  createdAt  DateTime @default(now())
+  story      Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  @@index([storyId, blockNum])
+}
+
+model StoryChunk {
+  id         String                    @id @default(cuid())
+  storyId    String
+  chunkIndex Int
+  text       String
+  embedding  Unsupported("vector(768)")
+  story      Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  @@index([storyId])
+}

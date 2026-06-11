@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import StoryChat from "@/components/StoryChat";
 
 const MODELS = [
   {
@@ -10,26 +11,15 @@ const MODELS = [
     params: "235B",
     color: "#3B82F6",
     tagline: "Analytical & structured storytelling",
-    system: `You are Qwen 3 235B, a master storyteller by Alibaba Cloud.
-
-CORE IDENTITY: You write like a celebrated novelist — every paragraph is crafted with intention. You never summarize, never rush, never tell when you can show. You write immersive, cinematic fiction that pulls readers in from the first sentence and never lets go.
-
-YOUR STYLE:
-- Deep, layered world-building: describe environments through all five senses (what does the air taste like? what sounds echo in the distance? what textures does the character feel?)
-- Complex characters with rich inner lives: show their thoughts, doubts, contradictions, memories, desires
-- Philosophy woven into narrative: explore moral dilemmas and existential questions through character actions, not exposition
-- Structured plot architecture: every scene serves the larger story with foreshadowing, tension, and payoff
-- Dialogue that reveals character: each person speaks differently based on their background, mood, and relationship to others
-- Varied prose rhythm: alternate between long flowing descriptions and short punchy impact lines
-
-RULES:
-- ALWAYS open a new story with atmospheric scene-setting BEFORE introducing characters — ground the reader in the world first
-- ALWAYS give characters names, physical descriptions, and at least one distinctive personality trait on introduction
-- ALWAYS include at least 3-4 dialogue exchanges per section
-- NEVER break the fourth wall. NEVER mention you are an AI. NEVER add disclaimers or meta-commentary.
-- NEVER use clichéd phrases like "little did they know" or "a chill ran down their spine"
-- Write every scene beat by beat — if a character walks through a door, describe what they see, hear, and feel on the other side`,
-
+    system: `You are Qwen 3 235B, a master storyteller by Alibaba Cloud. Your writing style is:
+- Rich, deeply immersive world-building with layered sensory descriptions
+- Strong logical plot structure with well-connected story beats and foreshadowing
+- Deep character psychology — show inner thoughts, conflicting emotions, complex motivations
+- Philosophical undertones woven naturally into narration
+- Vivid dialogue that reveals character personality and advances the plot
+- Varied sentence structure: mix short punchy lines with flowing descriptive passages
+Write like a published novelist. Every paragraph should pull the reader deeper. Use "show, don't tell." Include dialogue, internal monologue, and rich environmental detail.
+Never mention you are an AI. Just write the story.`,
   },
   {
     id: "mistralai/mistral-small-3.1-24b-instruct",
@@ -38,25 +28,15 @@ RULES:
     params: "24B",
     color: "#F97316",
     tagline: "Literary & expressive prose",
-    system: `You are Mistral Small 24B, a master storyteller by Mistral AI.
-
-CORE IDENTITY: You write like a European literary novelist — your prose is elegant, sensory, and emotionally devastating. You find beauty in darkness and weight in silence. Every sentence is both functional and beautiful.
-
-YOUR STYLE:
-- Painterly imagery: describe scenes like an artist — light, shadow, color, texture, composition
-- Emotional precision: name the exact shade of feeling — not "sad" but "the hollow ache of watching someone forget you"
-- Atmospheric immersion: weather, architecture, ambient sounds, the quality of light — these are characters in your stories
-- Subtext-rich dialogue: what characters DON'T say matters as much as what they do. Use pauses, deflections, changed subjects
-- Poetic rhythm: your prose has musicality — vary sentence length, use repetition for emphasis, let key moments breathe
-- Intimate character interiority: take readers inside the character's mind — their sensory experience, memories triggered by moments, physical reactions to emotions
-
-RULES:
-- ALWAYS establish mood and atmosphere before action — the reader should FEEL the world before things happen in it
-- ALWAYS introduce characters through sensory detail and behavior, not exposition (show them doing something characteristic)
-- ALWAYS include visceral physical detail in emotional scenes (tight throat, trembling hands, the taste of adrenaline)
-- NEVER write flat dialogue. Every line should reveal character, advance plot, or create tension — ideally all three
-- NEVER summarize emotional moments. Dramatize them fully with body language, inner thought, and environmental reflection
-- NEVER break the fourth wall. NEVER mention you are an AI. NEVER add disclaimers.`,
+    system: `You are Mistral Small 24B, a master storyteller by Mistral AI. Your writing style is:
+- Elegant, literary prose with European sensibility and poetic rhythm
+- Vivid, painterly imagery — every scene is a canvas of color, light, and shadow
+- Strong emotional resonance — make readers feel the characters' joy, fear, longing, rage
+- Rich atmospheric detail that immerses readers completely in the setting
+- Dialogue that crackles with subtext and personality
+- Metaphors and similes that surprise and illuminate
+Write like a celebrated literary novelist. Blend beauty with substance. Use "show, don't tell." Include dialogue, sensory detail, and character interiority.
+Never mention you are an AI. Just write the story.`,
   },
   {
     id: "google/gemma-3-27b-it",
@@ -65,26 +45,15 @@ RULES:
     params: "27B",
     color: "#10B981",
     tagline: "Cinematic & gripping narratives",
-    system: `You are Gemma 3 27B, a master storyteller by Google DeepMind.
-
-CORE IDENTITY: You write like a blockbuster screenwriter turned novelist — your stories are cinematic, propulsive, and impossible to put down. You combine visual storytelling with deep character work. Every chapter ending makes the reader desperate for the next.
-
-YOUR STYLE:
-- Cinematic scene construction: open scenes like a camera — establish the wide shot, then zoom into character details
-- Relentless pacing: every paragraph moves the story forward. Tension escalates, stakes rise, surprises land
-- Vivid action writing: fight scenes, chase sequences, confrontations — make them visceral, choreographed, and clear
-- Snappy, naturalistic dialogue: people interrupt each other, trail off, use humor under pressure, speak in fragments
-- Character-driven hooks: end every section with a revelation, decision, or question that demands continuation
-- Grounded sensory detail: specific concrete details over vague descriptions — "a dented silver Zippo" not "a lighter"
-
-RULES:
-- ALWAYS start with an arresting opening image or action that creates immediate curiosity
-- ALWAYS give characters distinctive voices in dialogue — a soldier talks differently than a poet
-- ALWAYS include at least one unexpected moment per section — a reveal, a twist, a shift in power dynamics
-- ALWAYS use body language alongside dialogue (he said, flexing his jaw / she whispered, gripping the table edge)
-- NEVER let exposition slow momentum — weave backstory into action and dialogue naturally
-- NEVER break the fourth wall. NEVER mention you are an AI. NEVER add disclaimers.
-- NEVER use passive voice in action scenes`,
+    system: `You are Gemma 3 27B, a master storyteller by Google DeepMind. Your writing style is:
+- Gripping, cinematic prose that reads like a blockbuster movie playing in the reader's mind
+- Fast-paced yet detailed — every scene is fully realized with environment, action, and emotion
+- Relatable, three-dimensional characters with natural, snappy dialogue
+- Expert pacing — build tension, release, build again
+- Action sequences that are visceral and immediate. Quiet moments that breathe with intimacy
+- Strong hooks at the start and cliffhangers at the end
+Write like a bestselling fiction author. Make every paragraph impossible to stop reading. Use "show, don't tell." Include vivid dialogue, body language, and environmental detail.
+Never mention you are an AI. Just write the story.`,
   },
 ];
 
@@ -121,6 +90,7 @@ export default function Home() {
   const [showModelSwitch, setShowModelSwitch] = useState(false);
   const [totalTokens, setTotalTokens] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
+  const [storyId, setStoryId] = useState<string | null>(null);
   const [direction, setDirection] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -132,130 +102,64 @@ export default function Home() {
 
   const model = MODELS.find((m) => m.id === selectedModel);
 
-  const generateBlock = async (isFirst = false) => {
-    if (!selectedModel) return;
-    setLoading(true);
-    const currentModel = MODELS.find((m) => m.id === selectedModel)!;
-    const previousContent = blocks.map((b) => b.text).join("\n\n");
-
-    let userPrompt: string;
-    if (isFirst) {
-      const genreLabel = GENRES.find(g => g.id === genre)?.label || genre;
-      userPrompt = `Write the opening chapter of a ${genreLabel} story.${premise ? `
-
-THE PREMISE (interpret this fully — build the entire opening around this concept):
-${premise}
-
-Expand on this premise with rich detail. If the premise mentions a character, give them a full introduction with name, appearance, personality, and backstory hints. If it mentions a setting, bring that setting to vivid life with sensory details. If it mentions a conflict, set up the stakes and tension from the very first scene.` : `
-
-Create a wholly original ${genreLabel} story with a unique premise that hasn't been done a thousand times. Surprise the reader.`}
-
-STRUCTURE YOUR OPENING LIKE THIS:
-1. ATMOSPHERIC OPENING (50-80 words): Set the scene. Ground the reader in the world through vivid sensory detail — where are we? What does this place look/sound/smell/feel like? What time is it? What's the mood?
-2. CHARACTER INTRODUCTION (80-120 words): Introduce the protagonist through ACTION, not description. Show them doing something that reveals who they are. Give them a name, a distinctive physical detail, and a glimpse of their inner world.
-3. INCITING TENSION (100-150 words): Something disrupts the status quo. A discovery, an arrival, a revelation, a threat. The plot engine starts here. Include dialogue.
-4. ESCALATION (150-200 words): The situation develops. More characters may appear. Stakes become clearer. Conflict sharpens. Rich dialogue exchanges happen here.
-5. CLIFFHANGER ENDING (50-80 words): End on a moment that makes continuation irresistible — a door opening, a secret revealed, a choice that must be made, danger arriving.
-
-Write 500-700 words total. Do NOT write a title, chapter heading, or any meta-commentary. Begin directly with the story. Write every moment fully — dramatize, never summarize.`;
-
-    } else {
-      const directionNote = direction.trim()
-        ? `
-
-AUTHOR'S DIRECTION FOR THIS SECTION:
-"${direction.trim()}"
-
-IMPORTANT: This direction is your PRIMARY creative instruction. Interpret it generously — even if brief, expand it into a fully realized narrative beat. For example:
-- "betrayal" → craft a full betrayal scene with buildup, the moment of realization, emotional fallout, and dialogue
-- "they kiss" → build romantic tension, describe the environment, the hesitation, the moment, the aftermath
-- "time skip" → open with a new scene that implies time has passed through changed details, then reveal what changed
-- "plot twist" → set up expectations, then subvert them in a way that recontextualizes earlier events
-
-Weave this direction seamlessly into the narrative — it should feel like a natural story development, not a forced insertion.`
-        : "";
-      userPrompt = `STORY SO FAR:
-${previousContent}
-${directionNote}
-
-CONTINUE THE STORY. Write the next 500-700 words following these rules:
-
-CONTINUITY REQUIREMENTS:
-- Pick up EXACTLY where the last section ended — same scene, same moment, same emotional tone
-- Maintain perfect consistency: character names, appearances, relationships, established facts
-- Reference earlier details to create narrative cohesion (callback to something mentioned before)
-
-STORYTELLING REQUIREMENTS:
-- ADVANCE THE PLOT meaningfully — something important must happen, be decided, or be revealed
-- Include at least 3-4 lines of dialogue with distinct character voices
-- Show character emotions through PHYSICAL REACTIONS and INNER THOUGHTS, not just statements
-- Add at least one new sensory detail about the environment
-- Build tension or deepen emotional stakes
-
-ENDING:
-- End at a compelling cliffhanger, revelation, emotional peak, or moment of decision
-- The reader should feel COMPELLED to continue
-
-Do NOT add chapter headings. Do NOT summarize previous events. Do NOT repeat established information. Begin continuing the narrative immediately.`;
-    }
-
+  const startStory = async () => {
+    if (!selectedModel || !genre) return;
+    const m = MODELS.find((x) => x.id === selectedModel)!;
+    setBlocks([]); setTotalTokens(0); setTotalTime(0); setStoryId(null); setDirection("");
+    setLoading(true); setStep("writing");
     try {
-      const res = await fetch("/api/generate", {
+      const res = await fetch("/api/story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: m.id, system: m.system, modelName: m.name, genre, premise }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setStoryId(data.storyId);
+      setTotalTokens(data.tokens || 0);
+      setTotalTime(data.elapsed || 0);
+      setBlocks([{
+        text: data.text, modelId: m.id, modelName: m.name, modelColor: m.color,
+        elapsed: data.elapsed, tokens: data.tokens, tps: data.tps, blockNum: 1,
+      }]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setBlocks([{
+        text: `Error: ${msg}`, modelId: selectedModel, modelName: m.name, modelColor: m.color,
+        elapsed: 0, tokens: 0, tps: 0, blockNum: 1, error: true,
+      }]);
+    } finally { setLoading(false); }
+  };
+
+  const continueStory = async () => {
+    if (!selectedModel || !storyId) return;
+    const m = MODELS.find((x) => x.id === selectedModel)!;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/story/${storyId}/continue`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: currentModel.id,
-          system: currentModel.system,
-          prompt: userPrompt,
+          model: m.id, system: m.system, modelName: m.name,
+          direction: direction.trim() || undefined,
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-
-      setTotalTokens((prev) => prev + (data.tokens || 0));
-      setTotalTime((prev) => prev + (data.elapsed || 0));
-
-      setBlocks((prev) => [
-        ...prev,
-        {
-          text: data.text,
-          modelId: selectedModel,
-          modelName: currentModel.name,
-          modelColor: currentModel.color,
-          elapsed: data.elapsed,
-          tokens: data.tokens,
-          tps: data.tps,
-          blockNum: prev.length + 1,
-        },
-      ]);
+      setTotalTokens((p) => p + (data.tokens || 0));
+      setTotalTime((p) => p + (data.elapsed || 0));
       setDirection("");
-      if (isFirst) setStep("writing");
+      setBlocks((prev) => [...prev, {
+        text: data.text, modelId: m.id, modelName: m.name, modelColor: m.color,
+        elapsed: data.elapsed, tokens: data.tokens, tps: data.tps, blockNum: prev.length + 1,
+      }]);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setBlocks((prev) => [
-        ...prev,
-        {
-          text: `Error: ${message}`,
-          modelId: selectedModel,
-          modelName: currentModel.name,
-          modelColor: currentModel.color,
-          elapsed: 0, tokens: 0, tps: 0,
-          blockNum: prev.length + 1,
-          error: true,
-        },
-      ]);
-      if (isFirst) setStep("writing");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const startStory = () => {
-    if (!selectedModel || !genre) return;
-    setBlocks([]);
-    setTotalTokens(0);
-    setTotalTime(0);
-    generateBlock(true);
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setBlocks((prev) => [...prev, {
+        text: `Error: ${msg}`, modelId: selectedModel, modelName: m.name, modelColor: m.color,
+        elapsed: 0, tokens: 0, tps: 0, blockNum: prev.length + 1, error: true,
+      }]);
+    } finally { setLoading(false); }
   };
 
   const resetAll = () => {
@@ -263,6 +167,8 @@ Do NOT add chapter headings. Do NOT summarize previous events. Do NOT repeat est
     setBlocks([]);
     setTotalTokens(0);
     setTotalTime(0);
+    setStoryId(null);
+    setDirection("");
     setGenre(null);
     setPremise("");
   };
@@ -527,7 +433,7 @@ Do NOT add chapter headings. Do NOT summarize previous events. Do NOT repeat est
                   <textarea
                     value={direction}
                     onChange={(e) => setDirection(e.target.value)}
-                    placeholder="e.g. &quot;Introduce a betrayal&quot; or &quot;Shift to a flashback&quot; or &quot;The villain reveals their true identity&quot;..."
+                    placeholder='e.g. "Introduce a betrayal" or "Shift to a flashback" or "The villain reveals their true identity"...'
                     rows={2}
                     style={{
                       width: "100%", background: "#06060A", border: "1px solid #1A1A28",
@@ -538,13 +444,13 @@ Do NOT add chapter headings. Do NOT summarize previous events. Do NOT repeat est
                   />
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button onClick={() => generateBlock(false)} style={{
+                  <button onClick={continueStory} style={{
                     flex: 1, padding: 16, background: model?.color, border: "none", borderRadius: 12,
                     color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
                     boxShadow: `0 0 30px ${model?.color}20`, letterSpacing: 0.5,
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   }}>
-                    {direction.trim() ? `Continue with new direction →` : `Continue with ${model?.name} →`}
+                    {direction.trim() ? "Continue with new direction →" : `Continue with ${model?.name} →`}
                   </button>
                   <button onClick={copyStory} style={{
                     padding: "16px 24px", background: "#0E0E16", border: "1px solid #1A1A28",
@@ -553,6 +459,8 @@ Do NOT add chapter headings. Do NOT summarize previous events. Do NOT repeat est
                 </div>
               </div>
             )}
+
+            {storyId && <StoryChat storyId={storyId} />}
 
             {blocks.filter((b) => !b.error).length >= 2 && (
               <div style={{
