@@ -1,102 +1,142 @@
 import { prisma } from "./db";
+import { randomUUID } from "crypto";
 
-const GEMINI_EMBED_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent";
-
+// ──────────────────────────────────────────────
+// 1. Embeddings — Gemini gemini-embedding-001 (free, 768-dim)
+// ──────────────────────────────────────────────
 export async function embed(text: string): Promise<number[]> {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("GEMINI_API_KEY not set");
+  if (!key) throw new Error("GEMINI_API_KEY not configured");
 
-  const res = await fetch(`${GEMINI_EMBED_URL}?key=${key}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "models/gemini-embedding-001",
-      content: { parts: [{ text }] },
-      outputDimensionality: 768,
-    }),
-  });
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${key}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "models/gemini-embedding-001",
+        content: { parts: [{ text }] },
+        outputDimensionality: 768,
+      }),
+    }
+  );
+  if (!res.ok) throw new Error(`Embedding failed: ${res.status}`);
   const data = await res.json();
-  if (!data.embedding?.values) throw new Error("Embedding failed: " + JSON.stringify(data));
   return data.embedding.values as number[];
 }
 
-export function chunk(text: string, maxLen = 800, overlap = 100): string[] {
-  const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) || [text];
+function toVector(vec: number[]): string {
+  return `[${vec.join(",")}]`;
+}
+
+// ──────────────────────────────────────────────
+// 2. Chunking — paragraph-aware with overlap
+// ──────────────────────────────────────────────
+export function chunkText(text: string, target = 800, overlap = 120): string[] {
+  const paras = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   const chunks: string[] = [];
   let buf = "";
-
-  for (const s of sentences) {
-    if ((buf + s).length > maxLen && buf.length > 0) {
-      chunks.push(buf.trim());
-      const words = buf.split(" ");
-      buf = words.slice(-Math.ceil(overlap / 6)).join(" ") + " " + s;
+  for (const p of paras) {
+    if ((buf + "\n\n" + p).length > target && buf) {
+      chunks.push(buf);
+      buf = buf.slice(-overlap) + "\n\n" + p; // carry overlap into next chunk
     } else {
-      buf += s;
+      buf = buf ? buf + "\n\n" + p : p;
     }
   }
-  if (buf.trim()) chunks.push(buf.trim());
+  if (buf) chunks.push(buf);
   return chunks;
 }
 
-export async function ingestText(storyId: string, text: string, startIndex: number) {
-  const chunks = chunk(text);
+// ──────────────────────────────────────────────
+// 3. Ingest — chunk + embed + store a block's text
+//    startIndex = how many chunks already exist for this story
+// ──────────────────────────────────────────────
+export async function ingestText(storyId: string, text: string, startIndex: number): Promise<number> {
+  const chunks = chunkText(text);
   for (let i = 0; i < chunks.length; i++) {
-    const vec = await embed(chunks[i]);
-    const vecStr = `[${vec.join(",")}]`;
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO "StoryChunk" (id, "storyId", "chunkIndex", text, embedding)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4::vector)`,
-      storyId, startIndex + i, chunks[i], vecStr
-    );
+    const vec = toVector(await embed(chunks[i]));
+    await prisma.$executeRaw`
+      INSERT INTO "StoryChunk" (id, "storyId", text, "chunkIndex", embedding)
+      VALUES (${randomUUID()}, ${storyId}, ${chunks[i]}, ${startIndex + i}, ${vec}::vector)
+    `;
   }
+  return chunks.length;
 }
 
-export interface RetrievedChunk {
-  chunkIndex: number;
-  text: string;
-  similarity: number;
-}
+// ──────────────────────────────────────────────
+// 4. Retrieve — top-k cosine-similar chunks
+//    maxIndexExclusive: only consider chunks BEFORE this index
+//    (used for continuation, to exclude the most-recent block's own chunks)
+// ──────────────────────────────────────────────
+export type Hit = { text: string; chunkIndex: number; similarity: number };
 
 export async function retrieve(
-  storyId: string, query: string, topK = 4, excludeFrom = 999999
-): Promise<RetrievedChunk[]> {
-  const qVec = await embed(query);
-  const vecStr = `[${qVec.join(",")}]`;
+  storyId: string,
+  query: string,
+  k = 5,
+  maxIndexExclusive?: number
+): Promise<Hit[]> {
+  const qv = toVector(await embed(query));
 
-  const rows = await prisma.$queryRawUnsafe<RetrievedChunk[]>(
-    `SELECT "chunkIndex", text,
-            1 - (embedding <=> $1::vector) AS similarity
-     FROM "StoryChunk"
-     WHERE "storyId" = $2 AND "chunkIndex" < $3
-     ORDER BY embedding <=> $1::vector
-     LIMIT $4`,
-    vecStr, storyId, excludeFrom, topK
-  );
-  return rows;
+  if (maxIndexExclusive !== undefined) {
+    return prisma.$queryRaw<Hit[]>`
+      SELECT text, "chunkIndex", 1 - (embedding <=> ${qv}::vector) AS similarity
+      FROM "StoryChunk"
+      WHERE "storyId" = ${storyId} AND "chunkIndex" < ${maxIndexExclusive}
+      ORDER BY embedding <=> ${qv}::vector
+      LIMIT ${k}
+    `;
+  }
+
+  return prisma.$queryRaw<Hit[]>`
+    SELECT text, "chunkIndex", 1 - (embedding <=> ${qv}::vector) AS similarity
+    FROM "StoryChunk"
+    WHERE "storyId" = ${storyId}
+    ORDER BY embedding <=> ${qv}::vector
+    LIMIT ${k}
+  `;
 }
 
+// ──────────────────────────────────────────────
+// 5. Build the continuation prompt
+//    Instead of stuffing the WHOLE story, we send:
+//    relevant earlier passages (retrieved) + the most recent passage (verbatim)
+// ──────────────────────────────────────────────
 export function buildContinuationPrompt(
-  lastBlockText: string, retrieved: RetrievedChunk[], genre: string
+  recentText: string,
+  retrieved: Hit[],
+  genre: string | null
 ): string {
-  const excerpts = retrieved.length > 0
-    ? retrieved.map((r, i) => `[Excerpt ${i + 1}] ${r.text}`).join("\n\n")
-    : "(no earlier excerpts retrieved)";
+  const relevant = retrieved.length
+    ? retrieved.map((h, i) => `[Earlier Passage ${i + 1}] ${h.text}`).join("\n\n")
+    : "(this is early in the story — no earlier passages retrieved yet)";
 
-  return `GENRE: ${genre}
+  return `GENRE: ${genre || "fiction"}
 
-RELEVANT EARLIER PASSAGES (retrieved from story memory):
-${excerpts}
+═══ STORY MEMORY: RELEVANT EARLIER PASSAGES ═══
+These are semantically relevant excerpts from earlier in the story. Use them to maintain PERFECT CONTINUITY — reference established character names, descriptions, relationships, locations, objects, and unresolved plot threads. If a character was described with brown eyes earlier, they still have brown eyes. If a weapon was lost, it's still lost. If a promise was made, it still hangs in the air.
 
-MOST RECENT SECTION (continue directly from here):
-${lastBlockText}
+${relevant}
 
-Continue the story with the next 500-700 words. Requirements:
-- Continue EXACTLY from where the most recent section ended
-- Reference or build upon details from the earlier passages where relevant for continuity
-- Advance the plot meaningfully with new events, dialogue, or revelations
-- Include dialogue, character reactions, sensory detail, and internal thought
-- End at a compelling cliffhanger or turning point
-- Write every scene fully — dramatize, never summarize
+═══ MOST RECENT PASSAGE (continue DIRECTLY from the last sentence) ═══
+${recentText}
 
-Do NOT add chapter headings. Begin the continuation immediately.`;
+═══ WRITING INSTRUCTIONS ═══
+Write the next 500-700 words. This must read as a SEAMLESS continuation — if someone read the previous passage and this one back-to-back, they should not be able to tell where one ends and the other begins.
+
+CONTINUITY RULES:
+- Your FIRST sentence must flow naturally from the LAST sentence above. Same scene, same moment, same emotional register. No time jumps, no scene breaks, no "Meanwhile..." unless the previous passage ended at a natural chapter break
+- Reference at least ONE specific detail from the earlier passages (a character's name, a location, an object, an unresolved question) to create the feeling of a story that remembers itself
+- Characters must behave consistently with how they've been established. If someone was shy in passage 1, they don't become bold in passage 5 without a reason
+- Maintain the same narrative voice and tense established in the story
+
+STORYTELLING RULES:
+- ADVANCE THE PLOT: Something must change by the end of this section — a new discovery, a decision made, a relationship shifted, a danger escalated
+- Include at least 3 lines of dialogue with distinct character voices
+- Include at least 2 sensory details grounding the scene in physical reality
+- Show character emotions through PHYSICAL REACTIONS (tight jaw, drumming fingers, held breath) not just internal narration
+- End on a hook: a revelation, a threat, an unanswered question, a door about to open
+
+Do NOT add chapter headings. Do NOT summarize what happened before. Do NOT repeat information the reader already knows. Begin the continuation IMMEDIATELY.`;
 }

@@ -16,7 +16,7 @@ export async function callOpenRouter(model: string, messages: ChatMessage[]) {
       "HTTP-Referer": "https://llm-story-writer.vercel.app",
       "X-Title": "LLM Story Writer",
     },
-    body: JSON.stringify({ model, messages, max_tokens: 1500, temperature: 0.75 }),
+    body: JSON.stringify({ model, messages, max_tokens: 2500, temperature: 0.8 }),
   });
 
   const data = await res.json();

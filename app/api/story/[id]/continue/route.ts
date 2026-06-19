@@ -28,7 +28,20 @@ export async function POST(
     let userPrompt = buildContinuationPrompt(lastBlock.text, retrieved, story.genre);
 
     if (direction?.trim()) {
-      userPrompt += `\n\nAUTHOR'S DIRECTION FOR THIS SECTION:\n"${direction.trim()}"\n\nIMPORTANT: This direction is your PRIMARY creative instruction. Interpret it generously — even if brief, expand it into a fully realized narrative beat. Weave it seamlessly into the story as a natural development.`;
+      userPrompt += `
+
+═══ AUTHOR'S CREATIVE DIRECTION ═══
+The author wants THIS to happen in the next section:
+"${direction.trim()}"
+
+INTERPRETATION GUIDE — even brief directions should generate FULL scenes:
+- Single word (e.g. "betrayal") → Build the COMPLETE scene: Who betrays whom? How does the victim discover it? Show the confrontation, the emotional fallout, the dialogue. 200+ words minimum on this element.
+- Character action (e.g. "they kiss") → Build the tension BEFORE the moment, the moment itself in sensory detail, and the emotional aftermath. Don't rush to it — earn it.
+- Plot direction (e.g. "time skip 5 years") → Open with a changed scene that implies time passing through environmental and character changes. Reveal what's different through discovery, not exposition.
+- Tone shift (e.g. "make it darker") → Gradually shift the atmosphere through word choice, imagery, and character behavior. Don't flip a switch — turn a dial.
+- New element (e.g. "introduce a dragon") → Foreshadow before reveal. A shadow, a sound, a tremor, THEN the full introduction with sensory impact.
+
+This direction is your PRIMARY creative priority. The continuation MUST incorporate it as a natural story development, not a forced insertion. Weave it into the narrative so seamlessly that it feels like this was always where the story was heading.`;
     }
 
     const result = await callOpenRouter(model, [
