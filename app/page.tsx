@@ -287,6 +287,8 @@ interface StoryBlock {
   tps: number;
   blockNum: number;
   error?: boolean;
+  images?: { imageBase64: string; mimeType: string; prompt: string }[];
+  imageLoading?: boolean;
 }
 
 export default function Home() {
@@ -301,6 +303,7 @@ export default function Home() {
   const [totalTime, setTotalTime] = useState(0);
   const [storyId, setStoryId] = useState<string | null>(null);
   const [direction, setDirection] = useState("");
+  const [generateImages, setGenerateImages] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -331,6 +334,7 @@ export default function Home() {
         text: data.text, modelId: m.id, modelName: m.name, modelColor: m.color,
         elapsed: data.elapsed, tokens: data.tokens, tps: data.tps, blockNum: 1,
       }]);
+      if (generateImages) fetchImage(0, data.text, data.storyId);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setBlocks([{
@@ -362,6 +366,8 @@ export default function Home() {
         text: data.text, modelId: m.id, modelName: m.name, modelColor: m.color,
         elapsed: data.elapsed, tokens: data.tokens, tps: data.tps, blockNum: prev.length + 1,
       }]);
+      const newIndex = blocks.length;
+      if (generateImages) setTimeout(() => fetchImage(newIndex, data.text), 100);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setBlocks((prev) => [...prev, {
@@ -374,6 +380,30 @@ export default function Home() {
   const resetAll = () => {
     setStep("setup"); setBlocks([]); setTotalTokens(0); setTotalTime(0);
     setStoryId(null); setDirection(""); setGenre(null); setPremise("");
+  };
+
+  const fetchImage = async (blockIndex: number, text: string, sid?: string) => {
+    const id = sid || storyId;
+    if (!id) return;
+    setBlocks((prev) => prev.map((b, i) => i === blockIndex ? { ...b, imageLoading: true } : b));
+    try {
+      const res = await fetch(`/api/story/${id}/image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = await res.json();
+      if (data.images?.length > 0) {
+        setBlocks((prev) => prev.map((b, i) => i === blockIndex
+          ? { ...b, images: data.images, imageLoading: false }
+          : b
+        ));
+      } else {
+        setBlocks((prev) => prev.map((b, i) => i === blockIndex ? { ...b, imageLoading: false } : b));
+      }
+    } catch {
+      setBlocks((prev) => prev.map((b, i) => i === blockIndex ? { ...b, imageLoading: false } : b));
+    }
   };
 
   const copyStory = () => {
@@ -488,6 +518,26 @@ export default function Home() {
               ))}
             </div>
 
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40, padding: "14px 18px", background: "#0A0A12", border: "1px solid #14141F", borderRadius: 12 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "#E8E4DF", marginBottom: 2 }}>🎨 Generate Scene Images</div>
+                <div style={{ fontSize: 11, color: "#4B4556", fontWeight: 300 }}>3 AI-generated images per block (adds ~10s per block)</div>
+              </div>
+              <button onClick={() => setGenerateImages(!generateImages)} style={{
+                width: 48, height: 26, borderRadius: 13, border: "none", cursor: "pointer",
+                background: generateImages ? "#7C3AED" : "#1A1A28",
+                position: "relative", transition: "background 0.3s ease",
+              }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: "50%", background: "#fff",
+                  position: "absolute", top: 3,
+                  left: generateImages ? 25 : 3,
+                  transition: "left 0.3s ease",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                }} />
+              </button>
+            </div>
+
             <div style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: "#2A2A3A", fontWeight: 500, marginBottom: 12 }}>
               03 — Premise <span style={{ textTransform: "none", letterSpacing: 0, opacity: 0.5 }}>(optional)</span>
             </div>
@@ -541,10 +591,75 @@ export default function Home() {
                     </div>
                     {!block.error && <div className="mono" style={{ fontSize: 10, color: "#2A2A3A" }}>{block.elapsed}ms · {block.tps} tok/s</div>}
                   </div>
-                  {block.error ? (
+                   {block.error ? (
                     <div style={{ color: "#EF4444", fontSize: 14, padding: "8px 0 24px", lineHeight: 1.6 }}>{block.text}</div>
                   ) : (
-                    <div className="serif" style={{ fontSize: 18, lineHeight: 2, color: "#C8C4BF", fontWeight: 400, whiteSpace: "pre-wrap", padding: "4px 0 32px", borderLeft: `2px solid ${block.modelColor}15`, paddingLeft: 24 }}>{block.text}</div>
+                    <div style={{ padding: "4px 0 32px", borderLeft: `2px solid ${block.modelColor}15`, paddingLeft: 24 }}>
+                      {block.imageLoading && (
+                        <div style={{
+                          width: "100%", height: 200, background: "#0A0A14", borderRadius: 12,
+                          display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20,
+                          border: "1px solid #14141F",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#3A3644", fontSize: 12 }}>
+                            <div style={{ width: 14, height: 14, border: "2px solid #7C3AED25", borderTop: "2px solid #7C3AED", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                            Generating scene images...
+                          </div>
+                        </div>
+                      )}
+
+                      {(() => {
+                        const paragraphs = block.text.split("\n\n").filter(p => p.trim());
+                        const imgs = block.images || [];
+
+                        if (imgs.length === 0) {
+                          return (
+                            <div className="serif" style={{ fontSize: 18, lineHeight: 2, color: "#C8C4BF", fontWeight: 400, whiteSpace: "pre-wrap" }}>
+                              {block.text}
+                            </div>
+                          );
+                        }
+
+                        // Split paragraphs into 3 roughly equal chunks
+                        const third = Math.max(1, Math.ceil(paragraphs.length / 3));
+                        const chunks = [
+                          paragraphs.slice(0, third).join("\n\n"),
+                          paragraphs.slice(third, third * 2).join("\n\n"),
+                          paragraphs.slice(third * 2).join("\n\n"),
+                        ].filter(c => c.trim());
+
+                        const labels = ["Opening", "Midpoint", "Climax"];
+
+                        return (
+                          <>
+                            {chunks.map((chunk, idx) => (
+                              <div key={idx}>
+                                {imgs[idx] && (
+                                  <div style={{ marginBottom: 16, marginTop: idx > 0 ? 16 : 0, borderRadius: 12, overflow: "hidden", border: "1px solid #14141F", position: "relative" }}>
+                                    <img
+                                      src={`data:${imgs[idx].mimeType};base64,${imgs[idx].imageBase64}`}
+                                      alt={`${labels[idx]} scene`}
+                                      style={{ width: "100%", height: "auto", display: "block" }}
+                                    />
+                                    <div style={{
+                                      position: "absolute", bottom: 0, left: 0, right: 0,
+                                      background: "linear-gradient(transparent, rgba(6,6,10,0.85))",
+                                      padding: "24px 12px 8px", fontSize: 9, color: "#5A5664",
+                                      letterSpacing: 2, textTransform: "uppercase",
+                                    }}>
+                                      {labels[idx]}
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="serif" style={{ fontSize: 18, lineHeight: 2, color: "#C8C4BF", fontWeight: 400, whiteSpace: "pre-wrap" }}>
+                                  {chunk}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        );
+                      })()}
+                    </div>
                   )}
                 </div>
               ))}
