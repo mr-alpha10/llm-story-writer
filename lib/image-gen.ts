@@ -68,7 +68,7 @@ No labels, no numbers, no explanation. Just the 3 prompts separated by |||`,
     },
   ]);
 
-  return result.text.split("|||").map(p => p.trim()).filter(p => p.length > 20);
+  return result.text.split("|||").map((p: string) => p.trim()).filter((p: string) => p.length > 20);
 }
 
 export async function generateImage(scenePrompt: string): Promise<{
