@@ -81,7 +81,7 @@ export async function generateImage(scenePrompt: string): Promise<{
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       if (attempt > 0) {
-        await new Promise(r => setTimeout(r, 3000 * attempt)); // wait 3s, 6s between retries
+        await new Promise(r => setTimeout(r, 2000 * attempt)); // wait 3s, 6s between retries
       }
       
       const url = `https://image.pollinations.ai/prompt/${encoded}?width=1920&height=1080&model=flux&nologo=true&enhance=true&seed=${Date.now() + attempt}`;
@@ -121,7 +121,7 @@ export async function generateStoryImages(storyText: string): Promise<{
       const img = await generateImage(prompt);
       if (img) images.push(img);
       // Delay between requests to avoid rate limiting
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 1000));
     }
 
     return images.filter((img): img is NonNullable<typeof img> => img !== null);
