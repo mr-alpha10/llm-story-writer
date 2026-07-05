@@ -55,12 +55,30 @@ export default function GalleryPage() {
   // Step 2: Generate images one by one
   useEffect(() => {
     if (scenes.length === 0 || generating) return;
-    const pendingIdx = scenes.findIndex((s) => s.status === "pending");
-    if (pendingIdx === -1) return;
+    const pendingScenes = scenes.filter((s) => s.status === "pending");
+    if (pendingScenes.length === 0) return;
 
     setGenerating(true);
-    generateImage(pendingIdx);
-  }, [scenes, generating]);
+
+    const generateAll = async () => {
+      const pendingIndices = scenes
+        .map((s, idx) => s.status === "pending" ? idx : -1)
+        .filter((idx) => idx !== -1);
+
+      // Process in batches of 2
+      for (let i = 0; i < pendingIndices.length; i += 2) {
+        const batch = pendingIndices.slice(i, i + 2);
+        await Promise.all(batch.map((idx) => generateImage(idx)));
+        // Small delay between batches
+        if (i + 2 < pendingIndices.length) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
+      setGenerating(false);
+    };
+
+    generateAll();
+  }, [scenes.length]);
 
   const generateImage = async (idx: number) => {
     setScenes((prev) => prev.map((s, i) => i === idx ? { ...s, status: "loading" } : s));
@@ -81,7 +99,7 @@ export default function GalleryPage() {
     } catch {
       setScenes((prev) => prev.map((s, i) => i === idx ? { ...s, status: "failed" } : s));
     } finally {
-      setGenerating(false);
+      // Check if all are done
     }
   };
 
