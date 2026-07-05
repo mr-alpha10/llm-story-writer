@@ -589,6 +589,24 @@ export default function Home() {
               </div>
             )}
 
+            {storyId && blocks.filter(b => !b.error).length > 0 && !loading && (
+              <div style={{ marginTop: 24 }}>
+                <button
+                  onClick={() => window.open(`/story/${storyId}/gallery`, "_blank")}
+                  style={{
+                    width: "100%", padding: 16,
+                    background: "linear-gradient(135deg, #7C3AED15, #EC489915)",
+                    border: "1px solid #7C3AED30", borderRadius: 12,
+                    color: "#B794F6", fontSize: 14, fontWeight: 500,
+                    cursor: "pointer", display: "flex", alignItems: "center",
+                    justifyContent: "center", gap: 10, letterSpacing: 0.5,
+                  }}
+                >
+                  🎨 Generate Illustrations (5 scenes)
+                </button>
+              </div>
+            )}
+
             {storyId && <StoryChat storyId={storyId} />}
 
             {blocks.filter((b) => !b.error).length >= 2 && (
