@@ -148,7 +148,7 @@ export default function GalleryPage() {
     // Add opening image as full page
     if (loadedScenes[0]?.url) {
       try {
-        const imgData = await loadImage(loadedScenes[0].url);
+        const imgData = await loadImage(loadedScenes[0].url!);
         pdf.addPage();
         pdf.setFillColor(6, 6, 10);
         pdf.rect(0, 0, pageW, pageH, "F");
@@ -217,7 +217,7 @@ export default function GalleryPage() {
     for (let sIdx = 1; sIdx < loadedScenes.length; sIdx++) {
       if (!loadedScenes[sIdx]?.url) continue;
       try {
-        const imgData = await loadImage(loadedScenes[sIdx].url);
+        const imgData = await loadImage(loadedScenes[sIdx].url!);
         pdf.addPage();
         pdf.setFillColor(6, 6, 10);
         pdf.rect(0, 0, pageW, pageH, "F");
