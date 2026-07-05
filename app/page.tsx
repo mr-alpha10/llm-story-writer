@@ -277,6 +277,51 @@ const GENRES = [
   { id: "dystopian", icon: "🏚️", label: "Dystopian" },
 ];
 
+const LEVELS = [
+  {
+    id: "basic",
+    icon: "📖",
+    label: "Basic",
+    desc: "Simple, easy-to-read language",
+    instruction: `LANGUAGE LEVEL: Write in simple, clear English suitable for young readers or ESL learners.
+- Use short sentences (10-15 words max)
+- Use common everyday vocabulary — no fancy or obscure words
+- Simple sentence structures: subject-verb-object
+- Explain any unusual concepts naturally within the story
+- Dialogue should sound like normal everyday conversation
+- Avoid metaphors, idioms, or figurative language unless very common ones
+- Reading level: grades 5-8`,
+  },
+  {
+    id: "intermediate",
+    icon: "📚",
+    label: "Intermediate",
+    desc: "Engaging prose, accessible vocabulary",
+    instruction: `LANGUAGE LEVEL: Write in polished, engaging English suitable for casual readers who enjoy novels.
+- Mix sentence lengths: some short for impact, some longer for flow
+- Use vivid but accessible vocabulary — a well-read teenager should understand every word
+- Light use of metaphors and similes that are intuitive, not obscure
+- Natural dialogue with personality and subtext
+- Descriptive but not overwrought — paint the scene without purple prose
+- Show emotions through actions and reactions, not complex internal monologues
+- Reading level: popular fiction, bestseller style`,
+  },
+  {
+    id: "professional",
+    icon: "🎓",
+    label: "Professional",
+    desc: "Literary prose, rich vocabulary",
+    instruction: `LANGUAGE LEVEL: Write in sophisticated, literary English suitable for avid readers and book lovers.
+- Complex, varied sentence structures with deliberate rhythm and pacing
+- Rich vocabulary — use the precise word, even if uncommon, when it serves the prose
+- Layered metaphors, symbolism, and thematic resonance woven into the narrative
+- Dialogue with subtext, implication, and distinct character voices
+- Internal monologue that reveals psychological depth and moral complexity
+- Prose that rewards rereading — plant details that gain meaning in retrospect
+- Reading level: literary fiction, award-winning novels`,
+  },
+];
+
 interface StoryBlock {
   text: string;
   modelId: string;
@@ -301,6 +346,7 @@ export default function Home() {
   const [totalTime, setTotalTime] = useState(0);
   const [storyId, setStoryId] = useState<string | null>(null);
   const [direction, setDirection] = useState("");
+  const [level, setLevel] = useState("intermediate");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -320,7 +366,13 @@ export default function Home() {
       const res = await fetch("/api/story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: m.id, system: m.system, modelName: m.name, genre, premise }),
+        body: JSON.stringify({
+          model: m.id,
+          system: m.system + "\n\n" + (LEVELS.find(l => l.id === level)?.instruction || ""),
+          modelName: m.name,
+          genre,
+          premise,
+        }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -349,7 +401,9 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: m.id, system: m.system, modelName: m.name,
+          model: m.id,
+          system: m.system + "\n\n" + (LEVELS.find(l => l.id === level)?.instruction || ""),
+          modelName: m.name,
           direction: direction.trim() || undefined,
         }),
       });
@@ -488,8 +542,24 @@ export default function Home() {
               ))}
             </div>
 
+            <div style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: "#2A2A3A", fontWeight: 500, marginBottom: 12 }}>03 — Language Level</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 40 }}>
+              {LEVELS.map((l) => (
+                <button key={l.id} onClick={() => setLevel(l.id)} style={{
+                  background: level === l.id ? "#7C3AED15" : "#0A0A12",
+                  border: level === l.id ? "1.5px solid #7C3AED50" : "1.5px solid #14141F",
+                  borderRadius: 12, padding: "16px 14px", cursor: "pointer",
+                  textAlign: "center", color: level === l.id ? "#E8E4DF" : "#4B4556",
+                }}>
+                  <div style={{ fontSize: 24, marginBottom: 4 }}>{l.icon}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{l.label}</div>
+                  <div style={{ fontSize: 10, color: level === l.id ? "#8A8690" : "#3A3644", fontWeight: 300 }}>{l.desc}</div>
+                </button>
+              ))}
+            </div>
+
             <div style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: "#2A2A3A", fontWeight: 500, marginBottom: 12 }}>
-              03 — Premise <span style={{ textTransform: "none", letterSpacing: 0, opacity: 0.5 }}>(optional)</span>
+              04 — Premise <span style={{ textTransform: "none", letterSpacing: 0, opacity: 0.5 }}>(optional)</span>
             </div>
             <textarea value={premise} onChange={(e) => setPremise(e.target.value)}
               placeholder="Describe your story idea, or leave blank for a surprise..."
