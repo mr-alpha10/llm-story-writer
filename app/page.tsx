@@ -280,9 +280,9 @@ const GENRES = [
 const LEVELS = [
   {
     id: "basic",
-    icon: "📖",
     label: "Basic",
     desc: "Simple, easy-to-read language",
+    img: "/levels/basic.jpg",
     instruction: `LANGUAGE LEVEL: Write in simple, clear English suitable for young readers or ESL learners.
 - Use short sentences (10-15 words max)
 - Use common everyday vocabulary — no fancy or obscure words
@@ -294,9 +294,9 @@ const LEVELS = [
   },
   {
     id: "intermediate",
-    icon: "📚",
     label: "Intermediate",
     desc: "Engaging prose, accessible vocabulary",
+    img: "/levels/intermediate.jpg",
     instruction: `LANGUAGE LEVEL: Write in polished, engaging English suitable for casual readers who enjoy novels.
 - Mix sentence lengths: some short for impact, some longer for flow
 - Use vivid but accessible vocabulary — a well-read teenager should understand every word
@@ -308,9 +308,9 @@ const LEVELS = [
   },
   {
     id: "professional",
-    icon: "🎓",
     label: "Professional",
     desc: "Literary prose, rich vocabulary",
+    img: "/levels/professional.jpg",
     instruction: `LANGUAGE LEVEL: Write in sophisticated, literary English suitable for avid readers and book lovers.
 - Complex, varied sentence structures with deliberate rhythm and pacing
 - Rich vocabulary — use the precise word, even if uncommon, when it serves the prose
@@ -582,14 +582,54 @@ export default function Home() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 40 }}>
               {LEVELS.map((l) => (
                 <button key={l.id} onClick={() => setLevel(l.id)} style={{
-                  background: level === l.id ? "#7C3AED15" : "#0A0A12",
-                  border: level === l.id ? "1.5px solid #7C3AED50" : "1.5px solid #14141F",
-                  borderRadius: 12, padding: "16px 14px", cursor: "pointer",
-                  textAlign: "center", color: level === l.id ? "#E8E4DF" : "#4B4556",
+                  position: "relative", overflow: "hidden",
+                  border: level === l.id ? "2px solid #7C3AED" : "2px solid transparent",
+                  borderRadius: 12, padding: 0, cursor: "pointer",
+                  aspectRatio: "1/1", background: "#0A0A12",
                 }}>
-                  <div style={{ fontSize: 24, marginBottom: 4 }}>{l.icon}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{l.label}</div>
-                  <div style={{ fontSize: 10, color: level === l.id ? "#8A8690" : "#3A3644", fontWeight: 300 }}>{l.desc}</div>
+                  <img
+                    src={l.img}
+                    alt={l.label}
+                    style={{
+                      width: "100%", height: "100%", objectFit: "cover", display: "block",
+                      opacity: level === l.id ? 1 : 0.4,
+                      transition: "all 0.3s ease",
+                      transform: level === l.id ? "scale(1.05)" : "scale(1)",
+                      filter: level === l.id ? "brightness(0.7)" : "brightness(0.3) grayscale(40%)",
+                    }}
+                  />
+                  <div style={{
+                    position: "absolute", bottom: 0, left: 0, right: 0,
+                    background: level === l.id
+                      ? "linear-gradient(transparent, rgba(124,58,237,0.85))"
+                      : "linear-gradient(transparent, rgba(6,6,10,0.95))",
+                    padding: "40px 10px 10px",
+                    transition: "background 0.3s ease",
+                  }}>
+                    <div style={{
+                      fontSize: 14, fontWeight: 700, color: "#fff",
+                      textTransform: "uppercase", letterSpacing: 2,
+                      textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+                      marginBottom: 2,
+                    }}>
+                      {l.label}
+                    </div>
+                    <div style={{
+                      fontSize: 9, color: level === l.id ? "#E8E4DF" : "#4B4556",
+                      fontWeight: 300,
+                    }}>
+                      {l.desc}
+                    </div>
+                  </div>
+                  {level === l.id && (
+                    <div style={{
+                      position: "absolute", top: 8, right: 8,
+                      width: 20, height: 20, borderRadius: "50%",
+                      background: "#7C3AED", display: "flex",
+                      alignItems: "center", justifyContent: "center",
+                      fontSize: 11, color: "#fff",
+                    }}>✓</div>
+                  )}
                 </button>
               ))}
             </div>
