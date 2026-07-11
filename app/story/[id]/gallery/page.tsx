@@ -499,7 +499,7 @@ export default function GalleryPage() {
                     fontWeight: 600, cursor: "pointer", boxShadow: "0 0 30px #7C3AED20",
                     display: "flex", alignItems: "center", gap: 8,
                   }}>
-                    📥 Download Story PDF
+                    Download Story PDF
                   </button>
                   <button onClick={() => window.close()} style={{
                     background: "none", border: "1px solid #1A1A28", borderRadius: 12,

@@ -267,14 +267,14 @@ ABSOLUTE RULES:
 ];
 
 const GENRES = [
-  { id: "fantasy", icon: "🐉", label: "Fantasy" },
-  { id: "scifi", icon: "🚀", label: "Sci-Fi" },
-  { id: "horror", icon: "🩸", label: "Horror" },
-  { id: "romance", icon: "💕", label: "Romance" },
-  { id: "mystery", icon: "🔍", label: "Mystery" },
-  { id: "adventure", icon: "🗺️", label: "Adventure" },
-  { id: "thriller", icon: "⚡", label: "Thriller" },
-  { id: "dystopian", icon: "🏚️", label: "Dystopian" },
+  { id: "fantasy", label: "Fantasy", img: "/genres/fantasy.jpg" },
+  { id: "scifi", label: "Sci-Fi", img: "/genres/scifi.jpg" },
+  { id: "horror", label: "Horror", img: "/genres/horror.jpg" },
+  { id: "romance", label: "Romance", img: "/genres/romance.jpg" },
+  { id: "mystery", label: "Mystery", img: "/genres/mystery.jpg" },
+  { id: "adventure", label: "Adventure", img: "/genres/adventure.jpg" },
+  { id: "thriller", label: "Thriller", img: "/genres/thriller.jpg" },
+  { id: "dystopian", label: "Dystopian", img: "/genres/dystopian.jpg" },
 ];
 
 const LEVELS = [
@@ -528,16 +528,52 @@ export default function Home() {
             </div>
 
             <div style={{ fontSize: 11, letterSpacing: 3, textTransform: "uppercase", color: "#2A2A3A", fontWeight: 500, marginBottom: 12 }}>02 — Pick Genre</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 8, marginBottom: 40 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 40 }}>
               {GENRES.map((g) => (
                 <button key={g.id} onClick={() => setGenre(g.id)} style={{
-                  background: genre === g.id ? "#7C3AED15" : "#0A0A12",
-                  border: genre === g.id ? "1.5px solid #7C3AED50" : "1.5px solid #14141F",
-                  borderRadius: 10, padding: "14px 12px", cursor: "pointer",
-                  textAlign: "center", color: genre === g.id ? "#E8E4DF" : "#4B4556",
+                  position: "relative", overflow: "hidden",
+                  border: genre === g.id ? "2px solid #7C3AED" : "2px solid transparent",
+                  borderRadius: 12, padding: 0, cursor: "pointer",
+                  aspectRatio: "3/4", background: "#0A0A12",
                 }}>
-                  <div style={{ fontSize: 24, marginBottom: 4 }}>{g.icon}</div>
-                  <div style={{ fontSize: 12, fontWeight: 500 }}>{g.label}</div>
+                  <img
+                    src={g.img}
+                    alt={g.label}
+                    style={{
+                      width: "100%", height: "100%", objectFit: "cover", display: "block",
+                      opacity: genre === g.id ? 1 : 0.5,
+                      transition: "opacity 0.3s ease, transform 0.3s ease",
+                      transform: genre === g.id ? "scale(1.05)" : "scale(1)",
+                      filter: genre === g.id ? "brightness(0.8)" : "brightness(0.4) grayscale(30%)",
+                    }}
+                  />
+                  {/* Gradient overlay */}
+                  <div style={{
+                    position: "absolute", bottom: 0, left: 0, right: 0,
+                    background: genre === g.id
+                      ? "linear-gradient(transparent, rgba(124,58,237,0.8))"
+                      : "linear-gradient(transparent, rgba(6,6,10,0.9))",
+                    padding: "32px 10px 10px",
+                    transition: "background 0.3s ease",
+                  }}>
+                    <div style={{
+                      fontSize: 13, fontWeight: 700, color: "#fff",
+                      textTransform: "uppercase", letterSpacing: 2,
+                      textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+                    }}>
+                      {g.label}
+                    </div>
+                  </div>
+                  {/* Selected indicator */}
+                  {genre === g.id && (
+                    <div style={{
+                      position: "absolute", top: 8, right: 8,
+                      width: 20, height: 20, borderRadius: "50%",
+                      background: "#7C3AED", display: "flex",
+                      alignItems: "center", justifyContent: "center",
+                      fontSize: 11, color: "#fff",
+                    }}>✓</div>
+                  )}
                 </button>
               ))}
             </div>
@@ -595,7 +631,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              {genre && <div style={{ fontSize: 11, color: "#3A3644", textTransform: "uppercase", letterSpacing: 2 }}>{GENRES.find((g) => g.id === genre)?.icon} {genre}</div>}
+              {genre && <div style={{ fontSize: 11, color: "#3A3644", textTransform: "uppercase", letterSpacing: 2 }}>{genre}</div>}
             </div>
 
             <div style={{ marginBottom: 40 }}>
@@ -654,7 +690,7 @@ export default function Home() {
                   <button onClick={copyStory} style={{
                     padding: "16px 24px", background: "#0E0E16", border: "1px solid #1A1A28",
                     borderRadius: 12, color: "#6B6775", fontSize: 13, fontWeight: 500, cursor: "pointer",
-                  }}>📋 Copy All</button>
+                  }}>Copy All</button>
                 </div>
               </div>
             )}
@@ -672,7 +708,7 @@ export default function Home() {
                     justifyContent: "center", gap: 10, letterSpacing: 0.5,
                   }}
                 >
-                  🎨 Generate Illustrations (5 scenes)
+                  Generate Illustrations (5 scenes)
                 </button>
               </div>
             )}
