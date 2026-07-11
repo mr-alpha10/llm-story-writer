@@ -105,6 +105,7 @@ export default function GalleryPage() {
 
   const retryImage = (idx: number) => {
     setScenes((prev) => prev.map((s, i) => i === idx ? { ...s, status: "pending" } : s));
+    setTimeout(() => generateImage(idx), 100);
   };
 
   const downloadPDF = async () => {

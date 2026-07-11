@@ -437,6 +437,26 @@ export default function Home() {
 
   return (
     <div className="grain">
+      {/* Background video */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          objectFit: "cover",
+          zIndex: 0,
+          opacity: 0.1,
+          pointerEvents: "none",
+        }}
+      >
+        <source src="/bg-video.mp4" type="video/mp4" />
+      </video>
       <header style={{
         position: "sticky", top: 0, zIndex: 100, padding: "14px 28px",
         background: "rgba(6,6,10,0.88)", backdropFilter: "blur(20px)",
@@ -494,7 +514,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "36px 24px 120px" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "36px 24px 120px", position: "relative", zIndex: 1 }}>
         {step === "setup" && (
           <div style={{ animation: "fadeUp 0.6s cubic-bezier(0.16,1,0.3,1)" }}>
             <div style={{ textAlign: "center", marginBottom: 56 }}>
