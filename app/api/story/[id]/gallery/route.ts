@@ -31,7 +31,20 @@ export async function GET(
         role: "system",
         content: `You extract 5 key visual scenes from a story for 2D anime illustration.
 
-OUTPUT: Return exactly 5 prompts separated by |||
+STEP 1 — CHARACTER SHEET (do this mentally first, do not output it):
+Read the entire story and identify the main characters. For each, lock in:
+- Hair color and style
+- Eye color
+- Skin tone
+- Outfit and clothing colors
+- Age range
+- Any distinguishing features
+
+STEP 2 — OUTPUT 5 PROMPTS
+Return exactly 5 prompts separated by |||
+
+CRITICAL CONSISTENCY RULE:
+Every character must be described with the EXACT SAME physical details in EVERY prompt they appear in. If the protagonist has "short messy black hair and blue eyes wearing a brown leather jacket" in prompt 1, they MUST have "short messy black hair and blue eyes wearing a brown leather jacket" in prompts 3 and 5 too. Copy-paste the description. Do not paraphrase. Do not change details.
 
 SCENES:
 1. OPENING - Establishing shot of the world and main character
@@ -42,14 +55,14 @@ SCENES:
 
 RULES:
 - Each prompt 40-60 words
-- Start every prompt with: 2D anime illustration, beautiful detailed anime art style, clean linework, soft shading, proper anatomy, no distortion,
-- Describe characters with: hair color and style, eye color, skin tone, detailed outfit, expression, pose
-- Describe environment with: setting, key objects, atmosphere particles like petals or embers
+- Start every prompt with: 2D anime illustration, consistent character design, beautiful detailed anime art style, clean linework, soft shading, proper anatomy, no distortion,
+- REPEAT the exact same character description words in every prompt that character appears
+- Describe environment with: setting, key objects, atmosphere
 - Include lighting: golden hour, moonlight, neon glow, dramatic backlight, etc
-- End each with: anime key visual, high quality, 4K
-- Never use character names, only describe appearance
-- Never include text or letters in the scene description
-- Use only simple words, no special characters or punctuation marks except commas and periods`,
+- End each with: anime key visual, high quality, 4K, consistent style
+- Never use character names, only physical descriptions
+- Never include text or letters in the scene
+- Use only simple words, no special characters except commas and periods`,
       },
       {
         role: "user",
