@@ -80,14 +80,17 @@ export default function GalleryPage() {
     generateAll();
   }, [scenes.length]);
 
-  const generateImage = async (idx: number) => {
+  const generateImage = async (idx: number, retryPrompt?: string) => {
+    const prompt = retryPrompt || scenes[idx]?.prompt;
+    if (!prompt) return;
+
     setScenes((prev) => prev.map((s, i) => i === idx ? { ...s, status: "loading" } : s));
 
     try {
       const res = await fetch(`/api/story/${storyId}/gallery`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: scenes[idx].prompt }),
+        body: JSON.stringify({ prompt }),
       });
       const data = await res.json();
 
@@ -104,8 +107,10 @@ export default function GalleryPage() {
   };
 
   const retryImage = (idx: number) => {
+    const prompt = scenes[idx]?.prompt;
+    if (!prompt) return;
     setScenes((prev) => prev.map((s, i) => i === idx ? { ...s, status: "pending" } : s));
-    setTimeout(() => generateImage(idx), 100);
+    setTimeout(() => generateImage(idx, prompt), 100);
   };
 
   const downloadPDF = async () => {
