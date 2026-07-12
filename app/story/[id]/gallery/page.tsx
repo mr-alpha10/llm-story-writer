@@ -30,9 +30,14 @@ export default function GalleryPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [checking, setChecking] = useState(false);
 
-  // Step 1: Fetch scene prompts
+  // Step 1: Fetch scene prompts (only after authorized)
   useEffect(() => {
+    if (!authorized) return;
     async function fetchGallery() {
       try {
         const res = await fetch(`/api/story/${storyId}/gallery`);
@@ -50,7 +55,7 @@ export default function GalleryPage() {
       }
     }
     fetchGallery();
-  }, [storyId]);
+  }, [storyId, authorized]);
 
   // Step 2: Generate images one by one
   useEffect(() => {
@@ -79,6 +84,12 @@ export default function GalleryPage() {
 
     generateAll();
   }, [scenes.length]);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("gallery_auth") === "true") {
+      setAuthorized(true);
+    }
+  }, []);
 
   const generateImage = async (idx: number, retryPrompt?: string) => {
     const prompt = retryPrompt || scenes[idx]?.prompt;
@@ -111,6 +122,31 @@ export default function GalleryPage() {
     if (!prompt) return;
     setScenes((prev) => prev.map((s, i) => i === idx ? { ...s, status: "pending" } : s));
     setTimeout(() => generateImage(idx, prompt), 100);
+  };
+
+  const verifyPassword = async () => {
+    if (!password.trim()) return;
+    setChecking(true);
+    setAuthError("");
+    try {
+      const res = await fetch("/api/verify-gallery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: password.trim() }),
+      });
+      const data = await res.json();
+      if (data.authorized) {
+        setAuthorized(true);
+        sessionStorage.setItem("gallery_auth", "true");
+      } else {
+        setAuthError("Incorrect password");
+        setPassword("");
+      }
+    } catch {
+      setAuthError("Verification failed");
+    } finally {
+      setChecking(false);
+    }
   };
 
   const downloadPDF = async () => {
@@ -307,8 +343,62 @@ export default function GalleryPage() {
       </header>
 
       <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 24px 120px" }}>
-        {/* Loading prompts */}
-        {loading && (
+
+        {/* Password Gate */}
+        {!authorized && (
+          <div style={{ textAlign: "center", padding: "80px 0", maxWidth: 400, margin: "0 auto" }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: "50%",
+              background: "#7C3AED15", display: "flex", alignItems: "center",
+              justifyContent: "center", margin: "0 auto 24px", fontSize: 28,
+            }}>🙂</div>
+            <h2 style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 28, fontWeight: 300, color: "#F5F0EB", marginBottom: 8,
+            }}>Gallery Access</h2>
+            <p style={{ fontSize: 13, color: "#4B4556", marginBottom: 32, lineHeight: 1.6 }}>
+              Image generation requires a password. This protects API credits from unauthorized usage.
+            </p>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setAuthError(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter") verifyPassword(); }}
+                placeholder="Enter gallery password"
+                style={{
+                  flex: 1, background: "#0A0A12", border: `1px solid ${authError ? "#EF444450" : "#1A1A28"}`,
+                  borderRadius: 10, padding: "12px 16px", color: "#E8E4DF", fontSize: 14,
+                  fontFamily: "'Libre Franklin', sans-serif", outline: "none",
+                }}
+              />
+              <button
+                onClick={verifyPassword}
+                disabled={checking || !password.trim()}
+                style={{
+                  background: "#7C3AED", border: "none", borderRadius: 10,
+                  padding: "12px 24px", color: "#fff", fontSize: 14,
+                  fontWeight: 600, cursor: checking ? "not-allowed" : "pointer",
+                  opacity: checking || !password.trim() ? 0.5 : 1,
+                }}
+              >
+                {checking ? "..." : "Unlock"}
+              </button>
+            </div>
+            {authError && (
+              <div style={{ color: "#EF4444", fontSize: 12, marginBottom: 12 }}>{authError}</div>
+            )}
+            <button onClick={() => window.close()} style={{
+              background: "none", border: "none", color: "#3A3644",
+              fontSize: 12, cursor: "pointer", marginTop: 8,
+            }}>
+              ← Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Gallery content - only when authorized */}
+        {authorized && loading && (
           <div style={{ textAlign: "center", padding: "80px 0" }}>
             <div style={{
               width: 32, height: 32, border: "3px solid #7C3AED25",
@@ -322,7 +412,7 @@ export default function GalleryPage() {
         )}
 
         {/* Error */}
-        {error && (
+        {authorized && error && (
           <div style={{ textAlign: "center", padding: "80px 0" }}>
             <div style={{ color: "#EF4444", fontSize: 16, marginBottom: 16 }}>{error}</div>
             <button onClick={() => window.close()} style={{
@@ -333,7 +423,7 @@ export default function GalleryPage() {
         )}
 
         {/* Gallery */}
-        {!loading && !error && story && (
+        {authorized && !loading && !error && story && (
           <>
             {/* Title */}
             <div style={{ textAlign: "center", marginBottom: 48 }}>
